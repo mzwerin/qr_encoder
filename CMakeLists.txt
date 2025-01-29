@@ -6,4 +6,6 @@ set(CMAKE_C_STANDARD 11)
 add_executable(qr_encoder
         src/FPToolkit.c
         src/test_graphics.c
-        src/animate.c)
+        src/animate.c
+        src/encoder.c
+        src/reed_solomon.c)
