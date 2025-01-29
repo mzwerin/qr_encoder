@@ -2,8 +2,14 @@
 
 // ARGS: double clip_windowX[], double clip_windowY[], int N_clip,
 //       double clipX[], double clipY[], int *NXY)
-// RETURNS: nothing
-// Use &NXY to get new count for clipped polygon
+// RETURN: void
+
+// IMPORTANT NOTE: Use &NXY to get new count for clipped polygon
+
+// All graphics have been commented out with FPToolkit removed
+// To view clipping process:
+//   - #include "FPToolkit.c"
+//   - uncomment all G_ calls
 
 int in_out (double x[], double y[], int n, double P[2], int I, int J)
 // return 1 if point P is on the correct side of the line
@@ -167,6 +173,8 @@ void clip(double clip_windowX[], double clip_windowY[], int N_clip,
         int j = (i + 1) % N_clip;
         *NXY = clip_line(clip_windowX, clip_windowY, N_clip,
                          clipX, clipY, *NXY, i, j);
+        // to view clipping in action
+        // G_wait_key()
     }
 
 }
