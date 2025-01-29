@@ -79,6 +79,18 @@ build CMakeFiles/qr_encoder.dir/src/reed_solomon.c.o: C_COMPILER__qr_encoder_uns
   OBJECT_DIR = CMakeFiles/qr_encoder.dir
   OBJECT_FILE_DIR = CMakeFiles/qr_encoder.dir/src
 
+build CMakeFiles/qr_encoder.dir/src/clipper.c.o: C_COMPILER__qr_encoder_unscanned_Debug /Users/maxzwerin/CLionProjects/qr_encoder/src/clipper.c || cmake_object_order_depends_target_qr_encoder
+  DEP_FILE = CMakeFiles/qr_encoder.dir/src/clipper.c.o.d
+  FLAGS = -g -std=gnu11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=15.0 -fcolor-diagnostics
+  OBJECT_DIR = CMakeFiles/qr_encoder.dir
+  OBJECT_FILE_DIR = CMakeFiles/qr_encoder.dir/src
+
+build CMakeFiles/qr_encoder.dir/src/clipper_tester.c.o: C_COMPILER__qr_encoder_unscanned_Debug /Users/maxzwerin/CLionProjects/qr_encoder/src/clipper_tester.c || cmake_object_order_depends_target_qr_encoder
+  DEP_FILE = CMakeFiles/qr_encoder.dir/src/clipper_tester.c.o.d
+  FLAGS = -g -std=gnu11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=15.0 -fcolor-diagnostics
+  OBJECT_DIR = CMakeFiles/qr_encoder.dir
+  OBJECT_FILE_DIR = CMakeFiles/qr_encoder.dir/src
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target qr_encoder
@@ -87,7 +99,7 @@ build CMakeFiles/qr_encoder.dir/src/reed_solomon.c.o: C_COMPILER__qr_encoder_uns
 #############################################
 # Link the executable qr_encoder
 
-build qr_encoder: C_EXECUTABLE_LINKER__qr_encoder_Debug CMakeFiles/qr_encoder.dir/src/FPToolkit.c.o CMakeFiles/qr_encoder.dir/src/test_graphics.c.o CMakeFiles/qr_encoder.dir/src/animate.c.o CMakeFiles/qr_encoder.dir/src/encoder.c.o CMakeFiles/qr_encoder.dir/src/reed_solomon.c.o
+build qr_encoder: C_EXECUTABLE_LINKER__qr_encoder_Debug CMakeFiles/qr_encoder.dir/src/FPToolkit.c.o CMakeFiles/qr_encoder.dir/src/test_graphics.c.o CMakeFiles/qr_encoder.dir/src/animate.c.o CMakeFiles/qr_encoder.dir/src/encoder.c.o CMakeFiles/qr_encoder.dir/src/reed_solomon.c.o CMakeFiles/qr_encoder.dir/src/clipper.c.o CMakeFiles/qr_encoder.dir/src/clipper_tester.c.o
   FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=15.0
   OBJECT_DIR = CMakeFiles/qr_encoder.dir
   POST_BUILD = :

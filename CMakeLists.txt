@@ -8,4 +8,6 @@ add_executable(qr_encoder
         src/test_graphics.c
         src/animate.c
         src/encoder.c
-        src/reed_solomon.c)
+        src/reed_solomon.c
+        src/clipper.c
+)
