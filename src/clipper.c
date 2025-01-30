@@ -1,5 +1,3 @@
-#include "M2d_matrix_tools.c"
-
 // ARGS: double clip_windowX[], double clip_windowY[], int N_clip,
 //       double clipX[], double clipY[], int *NXY)
 // RETURN: void
