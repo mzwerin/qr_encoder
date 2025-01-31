@@ -504,8 +504,6 @@ void apply_mask(int mask) {
 }
 
 void test_masks() {
-    int best_points;
-    int best_mask;
     int q = 0;
 
     while (q != 'q') {
@@ -544,97 +542,85 @@ int main() {
     printf("\n     THIS PROGRAM GENERATES A QR CODE FOR A GIVEN LINK\n");
     printf("     PRESS 'Q' TO QUIT THE PROGRAM AFTER THE QR CODE HAS BEEN BUILT\n\n");
 
-    G_init_graphics(800, 800);
+    printf("     > INPUT LINK : ");
+    fgets(input, sizeof(input), stdin);
 
-    while (1) {
+    // Remove newline
+    input[strcspn(input, "\n")] = 0;
 
-        printf("     > INPUT LINK : ");
-        fgets(input, sizeof(input), stdin);
+    CharInfo info_array[5000];
+    int size;
 
-        // Remove newline
-        input[strcspn(input, "\n")] = 0;
+    string_to_charinfo(input, info_array, &size);
 
-        CharInfo info_array[5000];
-        int size;
+    char seg_count[9] ;
+    char_to_binary(size, seg_count);
 
-        string_to_charinfo(input, info_array, &size);
-
-        char seg_count[9] ;
-        char_to_binary(size, seg_count);
-
-        // Determine version
-        int version = determine_qr_version(size);
-        if (version == -1) {
-            printf("Input size too large for supported QR versions.\n");
-            return 1;
-        }
-
-        modules = (int)version * 4 + 17;
-
-        // Prepare data bits
-        char data_bits[1024] = "0100"; // Add mode indicator for byte mode
-        strcat(data_bits, seg_count);  // Add segment count
-        for (int i = 0; i < size; i++) {
-            strcat(data_bits, info_array[i].bits);
-        }
-
-        add_qr_padding(data_bits, size, version, &size);
-
-        char hex[5000];
-        binary_to_hex(data_bits, hex, sizeof(hex));
-
-        int ECC_LEN;
-        if (version >= 1 && version <= 10) {
-            ECC_LEN = ECC_LENGTHS[version - 1][level];
-        } else {
-            printf("Invalid version. Must be between 1 and 10.\n");
-            return 1;
-        }
-
-        char ECC[5000];
-        call_reedsolomon(hex, ECC_LEN, ECC, sizeof(ECC));
-
-        char bin[5000];
-        hexStringToBinString(ECC, bin, sizeof(bin));
-
-        strcat(data_bits, bin); // put all info into data_bits
-
-        int length = strlen(data_bits);
-
-        // Convert char array to int array
-        int binary[5000];
-        for (int i = 0; i < length; i++) {
-            binary[i] = data_bits[i] - '0'; // Convert '0' or '1' to 0 or 1
-
-        }
-
-        /*-------- GRAPHICS --------*/
-
-        init_grid();
-        init_timing_patterns();
-        init_finder_patterns();
-        init_dummy_format_bits();
-        if (version > 1) init_alignment_patterns();
-
-        G_rgb(1,1,1);
-        G_clear();
-
-        put_binary_in_grid(binary);
-
-        apply_mask(0);
-        display_grid(0);
-
-        int q = 0;
-
-        q = G_wait_key();
-        if (q == 'q') break;
-
-        printf("\n     SUCCESS. QR CODE HAS BEEN BUILT FOR\n     > > %s < <\n", input);
-        printf("     PRESS 'Q' TO QUIT AT ANY TIME\n");
-        printf("     PRESS 'R' TO CREATE A NEW QR CODE\n\n");
+    // Determine version
+    int version = determine_qr_version(size);
+    if (version == -1) {
+        printf("Input size too large for supported QR versions.\n");
+        return 1;
     }
 
+    modules = (int)version * 4 + 17;
+
+    // Prepare data bits
+    char data_bits[1024] = "0100"; // Add mode indicator for byte mode
+    strcat(data_bits, seg_count);  // Add segment count
+    for (int i = 0; i < size; i++) {
+        strcat(data_bits, info_array[i].bits);
+    }
+
+    add_qr_padding(data_bits, size, version, &size);
+
+    char hex[5000];
+    binary_to_hex(data_bits, hex, sizeof(hex));
+
+    int ECC_LEN;
+    ECC_LEN = ECC_LENGTHS[version - 1][level];
+
+    char ECC[5000];
+    call_reedsolomon(hex, ECC_LEN, ECC, sizeof(ECC));
+
+    char bin[5000];
+    hexStringToBinString(ECC, bin, sizeof(bin));
+
+    strcat(data_bits, bin); // put all info into data_bits
+
+    int length = strlen(data_bits);
+
+    // Convert char array to int array
+    int binary[5000];
+    for (int i = 0; i < length; i++) {
+        binary[i] = data_bits[i] - '0'; // Convert '0' or '1' to 0 or 1
+
+    }
+
+    /*-------- GRAPHICS --------*/
+
+    G_init_graphics(800, 800);
+
+    init_grid();
+    init_timing_patterns();
+    init_finder_patterns();
+    init_dummy_format_bits();
+    if (version > 1) init_alignment_patterns();
+
+    G_rgb(1,1,1);
+    G_clear();
+
+    put_binary_in_grid(binary);
+
+    apply_mask(0);
+    display_grid(0);
+
+    printf("\n     SUCCESS. QR CODE HAS BEEN BUILT FOR\n     > > %s < <\n", input);
+    printf("     PRESS 'Q' TO QUIT AT ANY TIME\n");
     printf("     ----------------------------------------------------------------\n\n");
 
-    exit(0);
+    while (1) {
+        q = G_wait_key();
+        if (q == 'q') exit(0);
+    }
 }
