@@ -533,16 +533,45 @@ void test_masks() {
     }
 }
 
-int start = 0;
+
+void loading(int num, int speed) {
+    int bar_length = 25;
+    int total = 100;
+
+    for (int i = 0; i <= total; i++) {
+        double x = speed * drand48();
+        i = i + (int) x;
+        if (i > total) i = total;
+
+        int percentage = (i * total) / total;
+        int numBars = (i * bar_length) / total;
+
+        if (num == 0)       printf("\r     > TRANSLATING LINK TO BINARY  : [");
+        else if (num == 1)  printf("\r     > GENERATING ERROR PROTECTION : [");
+        else                printf("\r     > BUILDING DISPLAY WINDOW     : [");
+
+        for (int i = 0; i < bar_length; i++) {
+            if (i < numBars) {
+                printf("#");
+            } else {
+                printf(" ");
+            }
+        }
+        printf("] %d%%", percentage);
+        fflush(stdout);
+        usleep(50000);
+    }
+    printf("\n");
+}
 
 int main() {
     char input[5000];
 
     printf("\n     ----------------------------------------------------------------\n");
-    printf("\n     THIS PROGRAM GENERATES A QR CODE FOR A GIVEN LINK\n");
+    printf("     THIS PROGRAM GENERATES A QR CODE FOR A GIVEN LINK\n");
     printf("     PRESS 'Q' TO QUIT THE PROGRAM AFTER THE QR CODE HAS BEEN BUILT\n\n");
 
-    printf("     > INPUT LINK : ");
+    printf("     INPUT LINK : ");
     fgets(input, sizeof(input), stdin);
 
     // Remove newline
@@ -577,6 +606,8 @@ int main() {
     char hex[5000];
     binary_to_hex(data_bits, hex, sizeof(hex));
 
+    printf("\n"); loading(0, 7);
+
     int ECC_LEN;
     ECC_LEN = ECC_LENGTHS[version - 1][level];
 
@@ -597,15 +628,19 @@ int main() {
 
     }
 
-    /*-------- GRAPHICS --------*/
+    loading(1, 3);
 
-    G_init_graphics(800, 800);
+    /*-------- GRAPHICS --------*/
 
     init_grid();
     init_timing_patterns();
     init_finder_patterns();
     init_dummy_format_bits();
     if (version > 1) init_alignment_patterns();
+
+    loading(2, 11);
+
+    G_init_graphics(800, 800);
 
     G_rgb(1,1,1);
     G_clear();
@@ -615,12 +650,11 @@ int main() {
     apply_mask(0);
     display_grid(0);
 
-    printf("\n     SUCCESS. QR CODE HAS BEEN BUILT FOR\n     > > %s < <\n", input);
-    printf("     PRESS 'Q' TO QUIT AT ANY TIME\n");
+    printf("     SUCCESS\n");
     printf("     ----------------------------------------------------------------\n\n");
 
     while (1) {
-        q = G_wait_key();
+        int q = G_wait_key();
         if (q == 'q') exit(0);
     }
 }
