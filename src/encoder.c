@@ -640,11 +640,29 @@ int main() {
     apply_mask(0);
     display_grid(0);
 
-    printf("     Success!\n");
+    printf("     Success!\n\n");
+    printf("     Press 's' to save as .bmp and exit\n"
+           "     Press 'q' to exit without saving\n");
     printf("     ----------------------------------------------------------------\n\n");
+
+    char *file = "output.bmp";
 
     while (1) {
         int q = G_wait_key();
-        if (q == 'q') exit(0);
+        if (q == 's') {
+            FILE *f = fopen(file, "w");
+            if (f == NULL) {
+                printf("error: could not open file '%s'\n", file);
+                exit(1);
+            }
+            G_save_image_to_file(f);
+            fclose(f);
+
+            G_save_to_bmp_file(file);
+            exit(0);
+        }
+        if (q == 'q') {
+            exit(0);
+        }
     }
 }
