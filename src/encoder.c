@@ -547,8 +547,8 @@ void loading(int speed) {
 
         printf("\r     > Progress : [");
 
-        for (int i = 0; i < bar_length; i++) {
-            if (i < numBars) {
+        for (int j = 0; j < bar_length; j++) {
+            if (j < numBars) {
                 printf("#");
             } else {
                 printf(" ");
@@ -620,7 +620,7 @@ int main() {
 
     }
 
-    loading(3);
+    loading(7);
 
     /*-------- GRAPHICS --------*/
 
