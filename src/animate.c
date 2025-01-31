@@ -3,6 +3,7 @@
 
 #define NUM_POINTS 50
 #define BOX_SIZE 100
+#define SLEEP 40000
 
 int NXY = NUM_POINTS;
 double X[1000], Y[1000];
@@ -63,45 +64,35 @@ void draw() {
     G_polygon(XCLIP, YCLIP, NCLIP);
 }
 
+void buffer() {
+    clear_screen();
+    draw();
+    G_display_image();
+    usleep(SLEEP);
+}
+
 
 void animate(int flag) {
-    int key;
     if (flag == 1) { // scale up
         while (radius < clip_size) {
-            //scale_circle(1.1);
             radius *= 1.1;
 
             init_circle();
             NXY = NUM_POINTS;
-
             clip(XCLIP, YCLIP,NCLIP,X, Y, &NXY);
 
-            clear_screen();
-            draw();
-
-            G_display_image();
-            usleep(40000);
+            buffer();
         }
     }
     else { // scale down
         while (radius > 45) {
-
-
-            //scale_circle(0.9);
             radius *= 0.9;
 
             init_circle();
             NXY = NUM_POINTS;
-            for (int i = 0; i < NCLIP; i++) {
-                int j = (i + 1) % NCLIP;
-                NXY = clip_line(XCLIP, YCLIP, NCLIP, X, Y, NXY, i, j);
-            }
+            clip(XCLIP, YCLIP,NCLIP,X, Y, &NXY);
 
-            clear_screen();
-            draw();
-
-            G_display_image();
-            usleep(40000);
+            buffer();
         }
     }
 }

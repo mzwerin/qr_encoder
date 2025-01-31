@@ -80,7 +80,7 @@ an int if the function was declared to do so
 #include <time.h> // for the get_time stuff
 #include <sys/time.h>
 #include <string.h> // for strlen
-#include <M2d_matrix_tools.c>
+#include "M2d_matrix_tools.c"
 
 
 
