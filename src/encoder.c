@@ -534,10 +534,9 @@ void test_masks() {
 }
 
 
-void loading(int num, int speed) {
+void loading(int speed) {
     int bar_length = 25;
     int total = 100;
-
     for (int i = 0; i <= total; i++) {
         double x = speed * drand48();
         i = i + (int) x;
@@ -546,9 +545,7 @@ void loading(int num, int speed) {
         int percentage = (i * total) / total;
         int numBars = (i * bar_length) / total;
 
-        if (num == 0)       printf("\r     > TRANSLATING LINK TO BINARY  : [");
-        else if (num == 1)  printf("\r     > GENERATING ERROR PROTECTION : [");
-        else                printf("\r     > BUILDING DISPLAY WINDOW     : [");
+        printf("\r     > Progress : [");
 
         for (int i = 0; i < bar_length; i++) {
             if (i < numBars) {
@@ -568,10 +565,7 @@ int main() {
     char input[5000];
 
     printf("\n     ----------------------------------------------------------------\n");
-    printf("     THIS PROGRAM GENERATES A QR CODE FOR A GIVEN LINK\n");
-    printf("     PRESS 'Q' TO QUIT THE PROGRAM AFTER THE QR CODE HAS BEEN BUILT\n\n");
-
-    printf("     INPUT LINK : ");
+    printf("     Paste link : ");
     fgets(input, sizeof(input), stdin);
 
     // Remove newline
@@ -606,8 +600,6 @@ int main() {
     char hex[5000];
     binary_to_hex(data_bits, hex, sizeof(hex));
 
-    printf("\n"); loading(0, 7);
-
     int ECC_LEN;
     ECC_LEN = ECC_LENGTHS[version - 1][level];
 
@@ -628,7 +620,7 @@ int main() {
 
     }
 
-    loading(1, 3);
+    loading(3);
 
     /*-------- GRAPHICS --------*/
 
@@ -637,8 +629,6 @@ int main() {
     init_finder_patterns();
     init_dummy_format_bits();
     if (version > 1) init_alignment_patterns();
-
-    loading(2, 11);
 
     G_init_graphics(800, 800);
 
@@ -650,7 +640,7 @@ int main() {
     apply_mask(0);
     display_grid(0);
 
-    printf("     SUCCESS\n");
+    printf("     Success!\n");
     printf("     ----------------------------------------------------------------\n\n");
 
     while (1) {
