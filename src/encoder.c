@@ -645,24 +645,27 @@ int main() {
     printf("     Success!\n\n");
     printf("     Press 's' to save as .bmp and exit\n"
            "     Press 'q' to exit without saving\n");
-    printf("     ----------------------------------------------------------------\n\n");
+
+    /*------- FILE SAVER -------*/
 
     char *file = "output.bmp";
 
     while (1) {
         int q = G_wait_key();
         if (q == 's') {
-            FILE *f = fopen(file, "w");
+            FILE *f = fopen(file, "w+");
             if (f == NULL) {
                 printf("error: could not open file '%s'\n", file);
                 exit(1);
             }
-            G_save_image_to_file(f);
             G_save_to_bmp_file(file);
-            exit(0);
+            printf("\n     Success!\n");
+            break;
         }
         if (q == 'q') {
             exit(0);
         }
     }
+    printf("     ----------------------------------------------------------------\n\n");
+    exit(0);
 }
