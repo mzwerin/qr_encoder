@@ -4,6 +4,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#define MAX_SIZE 50000
+
 /*----------------CONSTANTS----------------*/
 
 const int ECC_LENGTHS[10][4] = {
@@ -562,7 +564,7 @@ void loading(int speed) {
 }
 
 int main() {
-    char input[5000];
+    char input[MAX_SIZE];
 
     printf("\n     ----------------------------------------------------------------\n");
     printf("     Paste link : ");
@@ -571,7 +573,7 @@ int main() {
     // Remove newline
     input[strcspn(input, "\n")] = 0;
 
-    CharInfo info_array[5000];
+    CharInfo info_array[MAX_SIZE];
     int size;
 
     string_to_charinfo(input, info_array, &size);
@@ -589,7 +591,7 @@ int main() {
     modules = (int)version * 4 + 17;
 
     // Prepare data bits
-    char data_bits[1024] = "0100"; // Add mode indicator for byte mode
+    char data_bits[MAX_SIZE] = "0100"; // Add mode indicator for byte mode
     strcat(data_bits, seg_count);  // Add segment count
     for (int i = 0; i < size; i++) {
         strcat(data_bits, info_array[i].bits);
@@ -597,16 +599,16 @@ int main() {
 
     add_qr_padding(data_bits, size, version, &size);
 
-    char hex[5000];
+    char hex[MAX_SIZE];
     binary_to_hex(data_bits, hex, sizeof(hex));
 
     int ECC_LEN;
     ECC_LEN = ECC_LENGTHS[version - 1][level];
 
-    char ECC[5000];
+    char ECC[MAX_SIZE];
     call_reedsolomon(hex, ECC_LEN, ECC, sizeof(ECC));
 
-    char bin[5000];
+    char bin[MAX_SIZE];
     hexStringToBinString(ECC, bin, sizeof(bin));
 
     strcat(data_bits, bin); // put all info into data_bits
@@ -614,7 +616,7 @@ int main() {
     int length = strlen(data_bits);
 
     // Convert char array to int array
-    int binary[5000];
+    int binary[MAX_SIZE];
     for (int i = 0; i < length; i++) {
         binary[i] = data_bits[i] - '0'; // Convert '0' or '1' to 0 or 1
 
@@ -656,8 +658,6 @@ int main() {
                 exit(1);
             }
             G_save_image_to_file(f);
-            fclose(f);
-
             G_save_to_bmp_file(file);
             exit(0);
         }
