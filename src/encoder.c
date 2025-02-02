@@ -4,21 +4,42 @@
 #include <string.h>
 #include <ctype.h>
 
-#define MAX_SIZE 50000
-
 /*----------------CONSTANTS----------------*/
 
+#define MAX_SIZE 50000
+
+int binary[MAX_SIZE];
+int grid[100][100];
+int modules;
+
+// LEVEL 0 = Low
+// LEVEL 1 = Medium
+// LEVEL 2 = High
+// LEVEL 3 = Quartile
+int level = 0;
+
 const int ECC_LENGTHS[10][4] = {
-        {7, 10, 13, 17},    // Version 1
-        {10, 16, 22, 28},   // Version 2
-        {15, 26, 36, 44},   // Version 3
-        {20, 36, 52, 64},   // Version 4
-        {26, 48, 72, 88},   // Version 5
-        {36, 64, 96, 112},  // Version 6
-        {40, 72, 108, 130}, // Version 7
-        {48, 88, 132, 156}, // Version 8
-        {60, 110, 160, 192},// Version 9
-        {72, 130, 192, 224} // Version 10
+        {7, 10, 13, 17},     // Version 1
+        {10, 16, 22, 28},    // Version 2
+        {15, 26, 36, 44},    // Version 3
+        {20, 36, 52, 64},    // Version 4
+        {26, 48, 72, 88},    // Version 5
+        {36, 64, 96, 112},   // Version 6
+        {40, 72, 108, 130},  // Version 7
+        {48, 88, 132, 156},  // Version 8
+        {60, 110, 160, 192}, // Version 9
+        {72, 130, 192, 224}  // Version 10
+};
+
+const int format_bits[8][15] = {
+        {1,1,1,0,1,1,1,1,1,0,0,0,1,0,0},
+        {1,1,1,0,0,1,0,1,1,1,1,0,0,1,1},
+        {1,1,1,1,1,0,1,1,0,1,0,1,0,1,0},
+        {1,1,1,1,0,0,0,1,0,0,1,1,1,0,1},
+        {1,1,0,0,1,1,0,0,0,1,0,1,1,1,1},
+        {1,1,0,0,0,1,1,0,0,0,1,1,0,0,0},
+        {1,1,0,1,1,0,0,0,1,0,0,0,0,0,1},
+        {1,1,0,1,0,0,1,0,1,1,1,0,1,1,0}
 };
 
 /*-----------------STRUCTS-----------------*/
@@ -32,15 +53,15 @@ typedef struct {
 
 /*---------------CONVERSIONS---------------*/
 
-void char_to_binary(char ch, char *binary) {
+void char_to_binary(char ch, char *bin) {
     for (int i = 7; i >= 0; --i) {
-        binary[7 - i] = (ch & (1 << i)) ? '1' : '0';
+        bin[7 - i] = (ch & (1 << i)) ? '1' : '0';
     }
-    binary[8] = '\0';
+    bin[8] = '\0';
 }
 
-void binary_to_hex(const char* binary, char* hex, int hex_size) {
-    int bin_len = strlen(binary);
+void binary_to_hex(const char* bin, char* hex, int hex_size) {
+    int bin_len = strlen(bin);
 
     // Ensure the binary string length is a multiple of 4 for hex conversion
     if (bin_len % 4 != 0) {
@@ -60,7 +81,7 @@ void binary_to_hex(const char* binary, char* hex, int hex_size) {
     // Process 4 binary digits at a time
     for (int i = 0; i < hex_len; i++) {
         char segment[5]; // Temporary storage for 4 binary digits + '\0'
-        strncpy(segment, binary + i * 4, 4);
+        strncpy(segment, bin + i * 4, 4);
         segment[4] = '\0'; // Null terminate the segment
 
         // Convert binary segment to integer
@@ -160,10 +181,12 @@ int get_max_bits_for_version(int version) {
         case 8: return 1552;  // Version 8
         case 9: return 1856;  // Version 9
         case 10: return 2192; // Version 10
-            // Extend for versions 11–40 as needed
+
+        // Need to extend for versions > 10
+
         default:
             printf("Unsupported QR version: %d\n", version);
-            return -1; // Error: Unsupported version
+            return -1;
     }
 }
 
@@ -188,18 +211,6 @@ int add_qr_padding(char *data_bits, int size, int version, int *out_size) {
     return *out_size = total_bits;
 }
 
-void print_charinfo(const CharInfo info_array[], int size) {
-    printf("Index\tChar\tHex\tBinary\n");
-    printf("--------------------------------\n");
-    for (int i = 0; i < size; ++i) {
-        printf("%d\t%c\t%s\t%s\n",
-               info_array[i].index,
-               info_array[i].character,
-               info_array[i].hex_value,
-               info_array[i].bits);
-    }
-}
-
 void call_reedsolomon(const char *hex_string, int error_level, char *output, size_t output_size) {
     char command[8192];
 
@@ -221,7 +232,7 @@ void call_reedsolomon(const char *hex_string, int error_level, char *output, siz
     }
 
     // Read the output from Python script
-    if (fgets(output, output_size, fp) == NULL) {
+    if (fgets(output, (int) output_size, fp) == NULL) {
         perror("Failed to read Python output");
         exit(1);
     }
@@ -231,17 +242,6 @@ void call_reedsolomon(const char *hex_string, int error_level, char *output, siz
 }
 
 /*--------------INIT GRAPHICS--------------*/
-
-int grid[100][100];
-int modules;
-int format_bits[8][15] =   {{1,1,1,0,1,1,1,1,1,0,0,0,1,0,0},{1,1,1,0,0,1,0,1,1,1,1,0,0,1,1},{1,1,1,1,1,0,1,1,0,1,0,1,0,1,0},{1,1,1,1,0,0,0,1,0,0,1,1,1,0,1},
-                            {1,1,0,0,1,1,0,0,0,1,0,1,1,1,1},{1,1,0,0,0,1,1,0,0,0,1,1,0,0,0},{1,1,0,1,1,0,0,0,1,0,0,0,0,0,1},{1,1,0,1,0,0,1,0,1,1,1,0,1,1,0}};
-
-// LEVEL 0 = Low
-// LEVEL 1 = Medium
-// LEVEL 2 = High
-// LEVEL 3 = Quartile
-int level = 0;
 
 void init_grid() {
     for (int i = 0; i < modules; i++) {
@@ -328,12 +328,11 @@ void draw_single_box(double x, double y, double size, int c) {
 }
 
 void update(int i, int j) {
-    double size = floor(600 / modules);
+    double size = floor(600.0 / modules);
     double x = 100 + i * size;
     double y = 100 + j * size;
     draw_single_box(x, y, size, grid[i][j]);
-    int q = 0;
-    q = G_wait_key();
+    int q = G_wait_key();
     if (q == 'q') exit(0);
 }
 
@@ -396,7 +395,7 @@ void init_alignment_patterns() {
 void display_grid(int mask) {
     G_rgb(1,1,1);
     G_clear();
-    double size = floor(600 / modules);
+    double size = floor(600.0 / modules);
 
     init_timing_patterns();
     init_finder_patterns();
@@ -416,12 +415,12 @@ void display_grid(int mask) {
     }
 }
 
-void put_binary_in_grid(int binary[]) {
+void put_binary_in_grid(int bin[]) {
     int x = modules - 1;  // Start at the bottom row
     int y = 0;            // Start at the rightmost column
     int count = 0;        // Binary data index
 
-    grid[x][y] = binary[count]; count++;
+    grid[x][y] = bin[count]; count++;
 
     while (x >= 0) { // While not past the 0th row
         while (y < modules) {  // Zigzag up
@@ -430,7 +429,7 @@ void put_binary_in_grid(int binary[]) {
             x--;
             if (x >= 0 && y < modules) {
                 if (grid[x][y] == 2) {
-                    grid[x][y] = binary[count];
+                    grid[x][y] = bin[count];
                     count++;
                 }
             }
@@ -440,7 +439,7 @@ void put_binary_in_grid(int binary[]) {
             y++;
             if (x >= 0 && y < modules) {
                 if (grid[x][y] == 2) {
-                    grid[x][y] = binary[count];
+                    grid[x][y] = bin[count];
                     count++;
                 }
             }
@@ -451,7 +450,7 @@ void put_binary_in_grid(int binary[]) {
         if (x == 6) x--;
         if (x >= 0 && y < modules) {
             if (grid[x][y] == 2) {
-                grid[x][y] = binary[count];
+                grid[x][y] = bin[count];
                 count++;
             }
         }
@@ -461,7 +460,7 @@ void put_binary_in_grid(int binary[]) {
             x--;
             if (x >= 0 && y < modules) {
                 if (grid[x][y] == 2) {
-                    grid[x][y] = binary[count];
+                    grid[x][y] = bin[count];
                     count++;
                 }
             }
@@ -470,7 +469,7 @@ void put_binary_in_grid(int binary[]) {
             y--;
             if (x >= 0 && y < modules) {
                 if (grid[x][y] == 2) {
-                    grid[x][y] = binary[count];
+                    grid[x][y] = bin[count];
                     count++;
                 }
             }
@@ -479,9 +478,9 @@ void put_binary_in_grid(int binary[]) {
         x-=2;
         if (x >= 0 && y < modules) {
             if (grid[x][y] == 2) {
-                grid[x][y] = binary[count];
+                grid[x][y] = bin[count];
                 count++;
-                draw_single_box(x,y,modules,binary[count]); G_wait_key();
+                draw_single_box(x,y,modules,bin[count]); G_wait_key();
             }
         }
     }
@@ -504,37 +503,6 @@ void apply_mask(int mask) {
         }
     }
 }
-
-void test_masks() {
-    int q = 0;
-
-    while (q != 'q') {
-        q = G_wait_key();
-        if (q == 'q') exit(0);
-
-        q = q - 48;
-
-        char text[100];
-        // Copy original grid
-        int temp_grid[100][100];
-        memcpy(temp_grid, grid, sizeof(grid));
-
-        // Apply mask
-        apply_mask(q);
-
-        display_grid(q);
-
-        if (q >= 0 && q < 8) snprintf(text, sizeof(text), "applying mask : %d", q);
-        else snprintf(text, sizeof(text), "no mask applied");
-
-        G_rgb(0,0,0);
-        G_draw_string(text, 100, 745);
-
-        // Restore grid before testing next mask
-        memcpy(grid, temp_grid, sizeof(grid));
-    }
-}
-
 
 void loading(int speed) {
     int bar_length = 25;
@@ -616,13 +584,11 @@ int main() {
     int length = strlen(data_bits);
 
     // Convert char array to int array
-    int binary[MAX_SIZE];
     for (int i = 0; i < length; i++) {
-        binary[i] = data_bits[i] - '0'; // Convert '0' or '1' to 0 or 1
-
+        binary[i] = data_bits[i] - '0'; // Converts '0' or '1' to 0 or 1
     }
 
-    loading(7);
+    //loading(7);
 
     /*-------- GRAPHICS --------*/
 
@@ -655,15 +621,16 @@ int main() {
         if (q == 's') {
             FILE *f = fopen(file, "w+");
             if (f == NULL) {
-                printf("error: could not open file '%s'\n", file);
+                printf("Error: could not open file '%s'\n", file);
                 exit(1);
             }
-            G_save_to_bmp_file(file);
-            printf("\n     Success!\n");
+            int b = G_save_to_bmp_file(file);
+            if (b == 1) printf("\n     File has been saved.\n");
+            else printf("\n     Error saving file.\n");
             break;
         }
         if (q == 'q') {
-            exit(0);
+            break;
         }
     }
     printf("     ----------------------------------------------------------------\n\n");
