@@ -7,7 +7,7 @@
 
 int NXY = NUM_POINTS;
 double X[1000], Y[1000];
-double radius = 45.0; // Radius of the circle
+double radius = BOX_SIZE/2.1; // Radius of the circle
 double centerX = 400.0, centerY = 400.0; // Center of the circle
 
 int clip_size = 80;
@@ -61,7 +61,7 @@ void draw() {
     G_rgb(1,0,0);
     G_fill_polygon(X, Y, NXY);
     G_rgb(1,1,1);
-    G_polygon(XCLIP, YCLIP, NCLIP);
+    //G_polygon(XCLIP, YCLIP, NCLIP);
 }
 
 void buffer() {
@@ -75,24 +75,34 @@ void buffer() {
 void animate(int flag) {
     if (flag == 1) { // scale up
         while (radius < clip_size) {
-            radius *= 1.1;
+            radius *= 1.01;
+
+            printf("%lf\n", BOX_SIZE/radius);
 
             init_circle();
             NXY = NUM_POINTS;
             clip(XCLIP, YCLIP,NCLIP,X, Y, &NXY);
 
             buffer();
+            
+            int q = G_wait_key();
+            if (q == 'q') exit(0);
         }
     }
     else { // scale down
         while (radius > 45) {
             radius *= 0.9;
 
+            printf("%lf\n", BOX_SIZE/radius);
+
             init_circle();
             NXY = NUM_POINTS;
             clip(XCLIP, YCLIP,NCLIP,X, Y, &NXY);
 
             buffer();
+
+            int q = G_wait_key();
+            if (q == 'q') exit(0);
         }
     }
 }
