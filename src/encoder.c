@@ -625,33 +625,6 @@ void get_link_input() {
     input[strcspn(input, "\n")] = 0;
 }
 
-void loading(int speed) {
-    int bar_length = 25;
-    int total = 100;
-    for (int i = 0; i <= total; i++) {
-        double x = speed * drand48();
-        i = i + (int) x;
-        if (i > total) i = total;
-
-        int percentage = (i * total) / total;
-        int numBars = (i * bar_length) / total;
-
-        printf("\r     Processing : [");
-
-        for (int j = 0; j < bar_length; j++) {
-            if (j < numBars) {
-                printf("#");
-            } else {
-                printf(" ");
-            }
-        }
-        printf("] %d%%", percentage);
-        fflush(stdout);
-        usleep(50000);
-    }
-    printf("\n");
-}
-
 /*--------------ENCODE BINARY--------------*/
 
 void load_binary() {
@@ -701,8 +674,6 @@ void load_binary() {
     for (int i = 0; i < length; i++) {
         binary[i] = data_bits[i] - '0'; // Converts '0' or '1' to 0 or 1
     }
-
-    loading(20); // For kicks... this does nothing lol
 }
 
 /*---------------END PROGRAM---------------*/
