@@ -15,8 +15,8 @@ int modules;
 
 // LEVEL 0 = Low
 // LEVEL 1 = Medium
-// LEVEL 2 = High
-// LEVEL 3 = Quartile
+// LEVEL 2 = Quartile
+// LEVEL 3 = High
 int level = 0;
 int version;
 
@@ -354,12 +354,12 @@ void init_dummy_format_bits() {
     }
     grid[8][c-8] = 4;
 
-    if (level == 0) {
+    //if (level == 0) {
         grid[8][0] = 4;
         grid[8][1] = 4;
         grid[0][modules-9] = 4;
         grid[1][modules-9] = 4;
-    }
+    //}
 
     grid[8][7] = 1;
 }
@@ -568,65 +568,6 @@ void apply_mask(int mask) {
     }
 }
 
-void loading(int speed) {
-    int bar_length = 25;
-    int total = 100;
-    for (int i = 0; i <= total; i++) {
-        double x = speed * drand48();
-        i = i + (int) x;
-        if (i > total) i = total;
-
-        int percentage = (i * total) / total;
-        int numBars = (i * bar_length) / total;
-
-        printf("\r     > Progress : [");
-
-        for (int j = 0; j < bar_length; j++) {
-            if (j < numBars) {
-                printf("#");
-            } else {
-                printf(" ");
-            }
-        }
-        printf("] %d%%", percentage);
-        fflush(stdout);
-        usleep(50000);
-    }
-    printf("\n");
-}
-
-void get_inputs() {
-    char level_input;
-
-    printf("\n     ----------------------------------------------------------------\n");
-    printf("     L = low (~7%%), M = medium (~25%%), Q = quartile (~25%%), H = high (~30%%)\n");
-    printf("     Enter desired level of error correction : ");
-    while (1) {
-        scanf("%c", &level_input);
-        getchar();
-        if (level_input == 'L' || level_input == 'l') {
-            level = 0;
-            break;
-        } else if (level_input == 'M' || level_input == 'm') {
-            level = 1;
-            break;
-        } else if (level_input == 'Q' || level_input == 'q') {
-            level = 2;
-            break;
-        } else if (level_input == 'H' || level_input == 'h') {
-            level = 3;
-            break;
-        }
-    }
-
-    printf("\n     Paste link : ");
-    fgets(input, sizeof(input), stdin);
-
-
-    // Remove newline
-    input[strcspn(input, "\n")] = 0;
-}
-
 void load_graphics() {
     init_grid();
     init_timing_patterns();
@@ -646,6 +587,125 @@ void load_graphics() {
 
     printf("     Success!\n\n");
 }
+
+/*-------------INPUT PROCESSOR-------------*/
+
+void get_level_input() {
+    char level_input;
+
+    printf("\n     L = low (~7%%), M = medium (~25%%), Q = quartile (~25%%), H = high (~30%%)\n");
+    printf("     Enter desired level of error correction : ");
+    while (1) {
+        scanf("%c", &level_input);
+        getchar();
+        if (level_input == 'L' || level_input == 'l') {
+            level = 0;
+            break;
+        } else if (level_input == 'M' || level_input == 'm') {
+            level = 1;
+            break;
+        } else if (level_input == 'Q' || level_input == 'q') {
+            level = 2;
+            break;
+        } else if (level_input == 'H' || level_input == 'h') {
+            level = 3;
+            break;
+        }
+    }
+
+
+}
+
+void get_link_input() {
+    printf("\n     Paste link : ");
+    fgets(input, sizeof(input), stdin);
+
+
+    // Remove newline
+    input[strcspn(input, "\n")] = 0;
+}
+
+void loading(int speed) {
+    int bar_length = 25;
+    int total = 100;
+    for (int i = 0; i <= total; i++) {
+        double x = speed * drand48();
+        i = i + (int) x;
+        if (i > total) i = total;
+
+        int percentage = (i * total) / total;
+        int numBars = (i * bar_length) / total;
+
+        printf("\r     Processing : [");
+
+        for (int j = 0; j < bar_length; j++) {
+            if (j < numBars) {
+                printf("#");
+            } else {
+                printf(" ");
+            }
+        }
+        printf("] %d%%", percentage);
+        fflush(stdout);
+        usleep(50000);
+    }
+    printf("\n");
+}
+
+/*--------------ENCODE BINARY--------------*/
+
+void load_binary() {
+    CharInfo info_array[MAX_SIZE];
+    int size;
+
+    string_to_charinfo(input, info_array, &size);
+
+    char seg_count[9] ;
+    char_to_binary(size, seg_count);
+
+    // Determine version
+    version = determine_qr_version(size);
+    if (version == -1) {
+        printf("Input size too large for supported QR versions.\n");
+        return;
+    }
+
+    modules = (int) version * 4 + 17;
+
+    // Prepare data bits
+    char data_bits[MAX_SIZE] = "0100"; // Add mode indicator for byte mode
+    strcat(data_bits, seg_count);  // Add segment count
+    for (int i = 0; i < size; i++) {
+        strcat(data_bits, info_array[i].bits);
+    }
+
+    add_qr_padding(data_bits, size, &size);
+
+    char hex[MAX_SIZE];
+    binary_to_hex(data_bits, hex, sizeof(hex));
+
+    int ECC_LEN;
+    ECC_LEN = ECC_LENGTHS[version - 1][level];
+
+    char ECC[MAX_SIZE];
+    call_reedsolomon(hex, ECC_LEN, ECC, sizeof(ECC));
+
+    char bin[MAX_SIZE];
+    hexStringToBinString(ECC, bin, sizeof(bin));
+
+    strcat(data_bits, bin); // Put all info into data_bits
+
+    int length = strlen(data_bits);
+
+    // Convert char array to int array
+    for (int i = 0; i < length; i++) {
+        binary[i] = data_bits[i] - '0'; // Converts '0' or '1' to 0 or 1
+    }
+
+    loading(20); // For kicks... this does nothing lol
+}
+
+/*---------------END PROGRAM---------------*/
 
 void save_file() {
     char *home = getenv("HOME"); // get ~/Desktop path
@@ -690,56 +750,12 @@ void save_or_quit() {
 int main() {
 
     // Error correction level and pasted link
-    get_inputs();
+    printf("\n     ----------------------------------------------------------------");
+    //get_level_input();
+    level = 0;
+    get_link_input();
 
-    CharInfo info_array[MAX_SIZE];
-    int size;
-
-    string_to_charinfo(input, info_array, &size);
-
-    char seg_count[9] ;
-    char_to_binary(size, seg_count);
-
-    // Determine version
-    version = determine_qr_version(size);
-    if (version == -1) {
-        printf("Input size too large for supported QR versions.\n");
-        return 1;
-    }
-
-    modules = (int) version * 4 + 17;
-
-    // Prepare data bits
-    char data_bits[MAX_SIZE] = "0100"; // Add mode indicator for byte mode
-    strcat(data_bits, seg_count);  // Add segment count
-    for (int i = 0; i < size; i++) {
-        strcat(data_bits, info_array[i].bits);
-    }
-
-    add_qr_padding(data_bits, size, &size);
-
-    char hex[MAX_SIZE];
-    binary_to_hex(data_bits, hex, sizeof(hex));
-
-    int ECC_LEN;
-    ECC_LEN = ECC_LENGTHS[version - 1][level];
-
-    char ECC[MAX_SIZE];
-    call_reedsolomon(hex, ECC_LEN, ECC, sizeof(ECC));
-
-    char bin[MAX_SIZE];
-    hexStringToBinString(ECC, bin, sizeof(bin));
-
-    strcat(data_bits, bin); // Put all info into data_bits
-
-    int length = strlen(data_bits);
-
-    // Convert char array to int array
-    for (int i = 0; i < length; i++) {
-        binary[i] = data_bits[i] - '0'; // Converts '0' or '1' to 0 or 1
-    }
-
-    loading(20); // For kicks... this does nothing lol
+    load_binary();
 
     load_graphics();
 
