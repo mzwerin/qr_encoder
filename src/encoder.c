@@ -595,28 +595,6 @@ void loading(int speed) {
     printf("\n");
 }
 
-void save_file() {
-    char *home = getenv("HOME"); // get ~/Desktop path
-    if (home == NULL) {
-        printf("Error: Could not get HOME directory\n");
-        exit(0);
-    }
-
-    char file[512];
-    snprintf(file, sizeof(file), "%s/Desktop/output.bmp", home);
-
-    FILE *f = fopen(file, "w+");
-
-    if (f == NULL) {
-        printf("Error: Could not open file '%s'\n", file);
-        exit(0);
-    }
-
-    int b = G_save_to_bmp_file(file);
-    if (b == 1) printf("\n     File has been saved to desktop.\n");
-    else printf("\n     Error saving file.\n");
-}
-
 void get_inputs() {
     char level_input;
 
@@ -649,8 +627,69 @@ void get_inputs() {
     input[strcspn(input, "\n")] = 0;
 }
 
+void load_graphics() {
+    init_grid();
+    init_timing_patterns();
+    init_finder_patterns();
+    init_dummy_format_bits();
+    init_alignment();
+
+    G_init_graphics(800, 800);
+
+    G_rgb(1,1,1);
+    G_clear();
+
+    put_binary_in_grid(binary);
+
+    apply_mask(0);
+    display_grid(0);
+
+    printf("     Success!\n\n");
+}
+
+void save_file() {
+    char *home = getenv("HOME"); // get ~/Desktop path
+    if (home == NULL) {
+        printf("Error: Could not get HOME directory\n");
+        exit(0);
+    }
+
+    char file[512];
+    snprintf(file, sizeof(file), "%s/Desktop/output.bmp", home);
+
+    FILE *f = fopen(file, "w+");
+
+    if (f == NULL) {
+        printf("Error: Could not open file '%s'\n", file);
+        exit(0);
+    }
+
+    int b = G_save_to_bmp_file(file);
+    if (b == 1) printf("\n     File has been saved to desktop.\n");
+    else printf("\n     Error saving file.\n");
+}
+
+void save_or_quit() {
+    printf("     Press 's' to save as .bmp and exit\n"
+           "     Press 'q' to exit without saving\n");
+
+    while (1) {
+        int q = G_wait_key();
+        if (q == 's') {
+            save_file();
+            break;
+        }
+        if (q == 'q') {
+            break;
+        }
+    }
+    printf("     ----------------------------------------------------------------\n\n");
+    exit(1);
+}
+
 int main() {
 
+    // Error correction level and pasted link
     get_inputs();
 
     CharInfo info_array[MAX_SIZE];
@@ -668,7 +707,7 @@ int main() {
         return 1;
     }
 
-    modules = (int)version * 4 + 17;
+    modules = (int) version * 4 + 17;
 
     // Prepare data bits
     char data_bits[MAX_SIZE] = "0100"; // Add mode indicator for byte mode
@@ -691,7 +730,7 @@ int main() {
     char bin[MAX_SIZE];
     hexStringToBinString(ECC, bin, sizeof(bin));
 
-    strcat(data_bits, bin); // put all info into data_bits
+    strcat(data_bits, bin); // Put all info into data_bits
 
     int length = strlen(data_bits);
 
@@ -700,42 +739,9 @@ int main() {
         binary[i] = data_bits[i] - '0'; // Converts '0' or '1' to 0 or 1
     }
 
-    loading(20);
+    loading(20); // For kicks... this does nothing lol
 
-    /*-------- GRAPHICS --------*/
+    load_graphics();
 
-    init_grid();
-    init_timing_patterns();
-    init_finder_patterns();
-    init_dummy_format_bits();
-    init_alignment();
-
-    G_init_graphics(800, 800);
-
-    G_rgb(1,1,1);
-    G_clear();
-
-    put_binary_in_grid(binary);
-
-    apply_mask(0);
-    display_grid(0);
-
-    printf("     Success!\n\n");
-    printf("     Press 's' to save as .bmp and exit\n"
-           "     Press 'q' to exit without saving\n");
-
-    /*------- FILE SAVER -------*/
-
-    while (1) {
-        int q = G_wait_key();
-        if (q == 's') {
-            //save_file();
-            break;
-        }
-        if (q == 'q') {
-            break;
-        }
-    }
-    printf("     ----------------------------------------------------------------\n\n");
-    exit(1);
+    save_or_quit();
 }
