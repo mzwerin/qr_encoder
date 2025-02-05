@@ -8,6 +8,7 @@
 
 #define MAX_SIZE 50000
 
+char input[MAX_SIZE];
 int binary[MAX_SIZE];
 int grid[100][100];
 int modules;
@@ -17,6 +18,7 @@ int modules;
 // LEVEL 2 = High
 // LEVEL 3 = Quartile
 int level = 0;
+int version;
 
 const int ECC_LENGTHS[10][4] = {
         {7, 10, 13, 17},     // Version 1
@@ -69,6 +71,19 @@ const int format_bits[4][8][15] = {
             {0,0,0,1,1,0,1,0,0,0,0,1,1,0,0}, // H 6
             {0,0,0,1,0,0,0,0,0,1,1,1,0,1,1}  // H 7
             }
+};
+
+const int alignment_pattern_locations[10][3] = {
+        {-1, -1, -1},  // Version 1
+        {6, 18, -1},   // Version 2
+        {6, 22, -1},   // Version 3
+        {6, 26, -1},   // Version 4
+        {6, 30, -1},   // Version 5
+        {6, 34, -1},   // Version 6
+        {6, 22, 38},   // Version 7
+        {6, 24, 42},   // Version 8
+        {6, 26, 46},   // Version 9
+        {6, 28, 50}    // Version 10
 };
 
 
@@ -199,7 +214,7 @@ int determine_qr_version(int size) {
     return -1; // Input too large for supported QR versions
 }
 
-int get_max_bits_for_version(int version) {
+int get_max_bits_for_version() {
     switch (version) {
         case 1: return 152;   // Version 1
         case 2: return 272;   // Version 2
@@ -220,9 +235,9 @@ int get_max_bits_for_version(int version) {
     }
 }
 
-int add_qr_padding(char *data_bits, int size, int version, int *out_size) {
+int add_qr_padding(char *data_bits, int size, int *out_size) {
     int total_bits = strlen(data_bits);
-    int max_bits = get_max_bits_for_version(version);
+    int max_bits = get_max_bits_for_version();
 
     // Add terminator (up to 4 bits or remaining space)
     int terminator_bits = (total_bits + 4 <= max_bits) ? 4 : (max_bits - total_bits);
@@ -404,22 +419,41 @@ void init_format_bits(int mask) {
 
 }
 
-void init_alignment_patterns() {
-    int c = modules - 1;
-    for (int i = 4; i < 9; i++) {
-        for (int j = 4; j < 9; j++) {
-            grid[c - i][j] = 1;
+void individual_alignment(int x, int y) {
+    int out_x = x - 2, out_y = y - 2;
+    int in_x = x - 1, in_y = y - 1;
+    for (int i = 0; i < 5; i++) { // Outer layer
+        for (int j = 0; j < 5; j++) {
+            grid[out_x + i][out_y + j] = 1;
         }
     }
-
-    for (int i = 5; i < 8; i++) {
-        for (int j = 5; j < 8; j++) {
-            grid[c - i][j] = 0;
+    for (int i = 0; i < 3; i++) { // Outer layer
+        for (int j = 0; j < 3; j++) {
+            grid[in_x + i][in_y + j] = 0;
         }
     }
+    grid[x][y] = 1;
+}
 
-    grid[c - 6][6] = 1;
+void init_alignment() {
+    int a = alignment_pattern_locations[version-1][0];
+    int b = alignment_pattern_locations[version-1][1];
+    int c = alignment_pattern_locations[version-1][2];
 
+    if (version > 0 && version < 7) {
+
+        individual_alignment(b, a);
+
+    } else if (version >= 7) {
+
+        individual_alignment(a, b);
+        individual_alignment(b, a);
+        individual_alignment(b, b);
+        individual_alignment(b, c);
+        individual_alignment(c, a);
+        individual_alignment(c, b);
+
+    }
 }
 
 void display_grid(int mask) {
@@ -433,7 +467,7 @@ void display_grid(int mask) {
     if (mask >= 0 && mask < 8) init_format_bits(mask);
     else init_dummy_format_bits();
 
-    init_alignment_patterns();
+    init_alignment();
 
     for (int i = 0; i < modules; i++) {
         for (int j = 0; j < modules; j++) {
@@ -583,15 +617,41 @@ void save_file() {
     else printf("\n     Error saving file.\n");
 }
 
-int main() {
-    char input[MAX_SIZE];
+void get_inputs() {
+    char level_input;
 
     printf("\n     ----------------------------------------------------------------\n");
-    printf("     Paste link : ");
+    printf("     L = low (~7%%), M = medium (~25%%), Q = quartile (~25%%), H = high (~30%%)\n");
+    printf("     Enter desired level of error correction : ");
+    while (1) {
+        scanf("%c", &level_input);
+        getchar();
+        if (level_input == 'L' || level_input == 'l') {
+            level = 0;
+            break;
+        } else if (level_input == 'M' || level_input == 'm') {
+            level = 1;
+            break;
+        } else if (level_input == 'Q' || level_input == 'q') {
+            level = 2;
+            break;
+        } else if (level_input == 'H' || level_input == 'h') {
+            level = 3;
+            break;
+        }
+    }
+
+    printf("\n     Paste link : ");
     fgets(input, sizeof(input), stdin);
+
 
     // Remove newline
     input[strcspn(input, "\n")] = 0;
+}
+
+int main() {
+
+    get_inputs();
 
     CharInfo info_array[MAX_SIZE];
     int size;
@@ -602,7 +662,7 @@ int main() {
     char_to_binary(size, seg_count);
 
     // Determine version
-    int version = determine_qr_version(size);
+    version = determine_qr_version(size);
     if (version == -1) {
         printf("Input size too large for supported QR versions.\n");
         return 1;
@@ -617,7 +677,7 @@ int main() {
         strcat(data_bits, info_array[i].bits);
     }
 
-    add_qr_padding(data_bits, size, version, &size);
+    add_qr_padding(data_bits, size, &size);
 
     char hex[MAX_SIZE];
     binary_to_hex(data_bits, hex, sizeof(hex));
@@ -648,7 +708,7 @@ int main() {
     init_timing_patterns();
     init_finder_patterns();
     init_dummy_format_bits();
-    if (version > 1) init_alignment_patterns();
+    init_alignment();
 
     G_init_graphics(800, 800);
 
@@ -669,7 +729,7 @@ int main() {
     while (1) {
         int q = G_wait_key();
         if (q == 's') {
-            save_file();
+            //save_file();
             break;
         }
         if (q == 'q') {
